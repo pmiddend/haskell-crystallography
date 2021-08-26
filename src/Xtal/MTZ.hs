@@ -2,6 +2,7 @@
 
 module Xtal.MTZ (parseMtz, mtzHeader, mtzHistory, mtzReflections) where
 
+import Data.String(String)
 import Data.Word(Word8)
 import Data.Bool((&&))
 import Data.Binary(decode, decodeOrFail)
@@ -144,6 +145,10 @@ mtzHeaderIsNcol :: MtzHeaderEntry -> Maybe MtzNcolInfo
 mtzHeaderIsNcol (MtzNcol n) = Just n
 mtzHeaderIsNcol _ = Nothing
 
+mtzHeaderIsColInfo :: MtzHeaderEntry -> Maybe MtzColInfo
+mtzHeaderIsColInfo (MtzCol n) = Just n
+mtzHeaderIsColInfo _ = Nothing
+
 bsToText :: ByteString -> Text.Text
 bsToText = Text.pack . BS8.unpack
 
@@ -264,6 +269,7 @@ mtzHeaderEntryParser =
 --        <|> MtzUnknownHeader <$> take 80
 
 magicHeaderLocation = 20
+mtzRecordSize = 80
 
 data MtzFile = MtzFile
   { mtzReflections :: BoxedVector.Vector (UnboxedVector.Vector Float),
@@ -288,10 +294,11 @@ mtzParser = do
   unused1 <- anyWord8
   -- Byte 12
   unused2 <- anyWord8
-  -- Manual says we start at byte 21 with the data, but the implementation in libccp4 actually suggests 20
+  -- Manual says we start at byte 21 with the data, but actually, records are always 80 bytes, and we have the first record filled with some metadata,
+  -- so we skip ahead to the next record at byte 80
   let currentLocation = 12
-  unused3 <- take (magicHeaderLocation - currentLocation)
-  rawData <- take (fromIntegral headerLocationInBytes - magicHeaderLocation)
+  unused3 <- take (mtzRecordSize - currentLocation)
+  rawData <- take (fromIntegral headerLocationInBytes - mtzRecordSize)
   headerEntries <- many mtzHeaderEntryParser
   let locateHeader pred = listToMaybe (mapMaybe pred headerEntries)
       ncols = locateHeader mtzHeaderIsNcol
@@ -304,11 +311,13 @@ mtzParser = do
     Just (MtzNcolInfo colCount reflCount _batchCount) -> do
       case runGetOrFail (replicateM (colCount * reflCount) getFloathost) (BSL.fromStrict rawData) of
         Left (_, _, errorMessage) -> fail ("error decoding floats: " <> errorMessage)
-        Right (_, consumedBytes, floatVector) -> do
+        Right (_, _consumedBytes, floatVector) -> do
           let unfolder :: UnboxedVector.Vector Float -> (UnboxedVector.Vector Float, UnboxedVector.Vector Float)
               unfolder = UnboxedVector.splitAt colCount
               unfoldedVector :: BoxedVector.Vector (UnboxedVector.Vector Float)
               unfoldedVector = BoxedVector.unfoldrExactN reflCount unfolder (UnboxedVector.fromList floatVector)
-          pure (MtzFile (trace ("consumed bytes " <> show consumedBytes) unfoldedVector) headerEntries historyEntries)
+              columnNames :: String
+              columnNames = show (Text.intercalate "," (mtzColName <$> mapMaybe mtzHeaderIsColInfo headerEntries))
+          pure (MtzFile (trace ("cols: " <> columnNames) unfoldedVector) headerEntries historyEntries)
 
 parseMtz = parseOnly mtzParser

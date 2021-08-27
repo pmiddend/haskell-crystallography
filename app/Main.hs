@@ -2,18 +2,19 @@
 
 module Main where
 
+import Data.List((!!))
+import qualified Data.ByteString.Char8 as BS8
 import Control.Applicative (pure)
 import Control.Monad (forM_, (=<<))
 import Data.ByteString (getContents)
-import Data.Function ((.))
+import Data.Function ((.), ($))
 import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
-import Data.Text (Text, pack)
+import Data.Text (Text, pack, unpack)
 import Data.Text.IO (putStrLn)
-import Database.MySQL.Base (ciDatabase, ciPassword, ciUser, connect, defaultConnectInfo, query_)
+import Database.MySQL.Simple (ConnectInfo(..), connect, defaultConnectInfo, query_, Only(Only))
 import System.Environment (getArgs)
 import System.IO (IO)
-import qualified System.IO.Streams as Streams
 import Xtal.MTZ (MtzFile, mtzDataset, mtzHeader, mtzHistory, mtzLocateHeader, mtzLocateHeaders, mtzReflections, mtzTitle, parseMtz)
 import Prelude (Either (Left, Right), Foldable (length), Show (show), print, undefined)
 
@@ -34,12 +35,13 @@ main = do
   conn <-
     connect
       defaultConnectInfo
-        { ciUser = (args !! 0),
-          ciPassword = (args !! 1),
-          ciDatabase = (args !! 2)
+        { connectHost = args !! 0,
+          connectUser = args !! 1,
+          connectPassword = args !! 2,
+          connectDatabase = args !! 3
         }
-  (defs, is) <- query_ conn "SELECT crystal_id FROM Crystals"
-  print =<< Streams.toList is
+  xs <- query_ conn "SELECT crystal_id FROM Crystals"
+  forM_ xs $ \(Only crystalId) -> putStrLn crystalId
 
 mtzmain :: IO ()
 mtzmain = do

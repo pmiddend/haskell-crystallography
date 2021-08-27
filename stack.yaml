@@ -35,12 +35,7 @@ packages:
 # These entries can reference officially published versions as well as
 # forks / in-progress versions pinned to a git hash. For example:
 #
-extra-deps:
-  # mysql-haskell begin
-  - mysql-haskell-0.8.4.3@sha256:d3ca21ae8cc88670f8adb17c7cacb8bb770f1a58d60b5bff346d1f3fc843d98c,3489
-  - tcp-streams-1.0.1.1@sha256:35e9ecfa515797052f8c3c01834d2daebd5e93f3152c7fc98b32652bf6f0c052,2329
-  - wire-streams-0.1.1.0@sha256:08816c7fa53b20f52e5c465252c106d9de8e6d9580ec0b6d9f000a34c7bcefc8,2130
-  # mysql-haskell end
+#extra-deps: []
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

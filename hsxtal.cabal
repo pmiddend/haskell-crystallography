@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 96d37c6745e7e907bef841ca137d4a2449728f19faf11876138b77f4e95dd843
+-- hash: b00f9b58a4feedaad8e2e5b4f3cf5fe3aa1fd0e8a62c3eea48d037529a589371
 
 name:           hsxtal
 version:        0.1.0.0
@@ -38,8 +38,7 @@ library
     , base >=4.7 && <5
     , binary
     , bytestring
-    , io-streams
-    , mysql-haskell
+    , mysql-simple
     , text
     , vector
   default-language: Haskell2010
@@ -58,8 +57,7 @@ executable hsxtal-exe
     , binary
     , bytestring
     , hsxtal
-    , io-streams
-    , mysql-haskell
+    , mysql-simple
     , text
     , vector
   default-language: Haskell2010
@@ -79,8 +77,7 @@ test-suite hsxtal-test
     , binary
     , bytestring
     , hsxtal
-    , io-streams
-    , mysql-haskell
+    , mysql-simple
     , text
     , vector
   default-language: Haskell2010

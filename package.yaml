@@ -28,8 +28,7 @@ dependencies:
 - vector
 - binary
 # For DB connection
-- mysql-haskell
-- io-streams
+- mysql-simple
 
 library:
   source-dirs: src

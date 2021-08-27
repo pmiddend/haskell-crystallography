@@ -1,19 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
-import Prelude(print, Either (Left, Right), Show (show), Foldable (length), undefined)
-import Data.Text.IO(putStrLn)
-import Data.Text(pack, Text)
-import System.IO(IO)
-import Control.Applicative(pure)
-import Control.Monad(forM_, (=<<))
-import Data.ByteString(getContents)
-import Xtal.MTZ(parseMtz, mtzHeader, mtzHistory, mtzReflections, MtzFile, mtzTitle, mtzLocateHeader, mtzLocateHeaders, mtzDataset)
-import Data.Monoid((<>))
-import Data.Maybe(fromMaybe)
-import Data.Function((.))
-import Database.MySQL.Base(connect, query_, ciUser, ciPassword, ciDatabase, defaultConnectInfo)
+import Control.Applicative (pure)
+import Control.Monad (forM_, (=<<))
+import Data.ByteString (getContents)
+import Data.Function ((.))
+import Data.Maybe (fromMaybe)
+import Data.Monoid ((<>))
+import Data.Text (Text, pack)
+import Data.Text.IO (putStrLn)
+import Database.MySQL.Base (ciDatabase, ciPassword, ciUser, connect, defaultConnectInfo, query_)
+import System.Environment (getArgs)
+import System.IO (IO)
 import qualified System.IO.Streams as Streams
+import Xtal.MTZ (MtzFile, mtzDataset, mtzHeader, mtzHistory, mtzLocateHeader, mtzLocateHeaders, mtzReflections, mtzTitle, parseMtz)
+import Prelude (Either (Left, Right), Foldable (length), Show (show), print, undefined)
 
 showText :: Show a => a -> Text
 showText = pack . show
@@ -28,7 +30,14 @@ mtzdmp mtz = do
 
 main :: IO ()
 main = do
-  conn <- connect defaultConnectInfo { ciUser = "root", ciPassword = "root", ciDatabase = "SARS_COV_2_v2" }
+  args <- getArgs
+  conn <-
+    connect
+      defaultConnectInfo
+        { ciUser = (args !! 0),
+          ciPassword = (args !! 1),
+          ciDatabase = (args !! 2)
+        }
   (defs, is) <- query_ conn "SELECT crystal_id FROM Crystals"
   print =<< Streams.toList is
 
@@ -38,4 +47,5 @@ mtzmain = do
   case parseMtz stdin of
     Left e -> putStrLn (pack e)
     Right v -> mtzdmp v
-      --forM_ (mtzReflections v) print
+
+--forM_ (mtzReflections v) print

@@ -27,7 +27,9 @@ dependencies:
 - text
 - vector
 - binary
-- vector-binary-instances
+# For DB connection
+- mysql-haskell
+- io-streams
 
 library:
   source-dirs: src

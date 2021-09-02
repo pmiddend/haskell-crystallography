@@ -258,7 +258,7 @@ valmParser = (AT.string "NAN" $> Nothing) <|> (Just <$> AT.double)
 
 mtzHeaderEntryParser =
   let rawHeader :: ByteString -> Parser ByteString
-      rawHeader title = string (title <> " ") *> take (80 - length title - 1)
+      rawHeader title = string (traceShowId title <> " ") *> take (80 - length title - 1)
       strippedHeader title = dropWhileEnd (== 32) <$> rawHeader title
       subParsedHeader title parser ctor = ((rawHeader title >>= applyTextParser parser) <&> ctor)
    in (MtzVersion <$> strippedHeader "VERS")

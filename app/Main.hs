@@ -2,17 +2,20 @@
 
 module Main where
 
-import Data.List((!!))
+import System.ProgressBar(newProgressBar, incProgress, defStyle, Progress(..), Style(..), elapsedTime, remainingTime, renderDuration, percentage, msg)
+import Control.Concurrent.ParallelIO.Global(parallel_, stopGlobalPool)
+import Data.Functor((<$>))
+import Data.List((!!), head)
 import qualified Data.ByteString.Char8 as BS8
 import Control.Applicative (pure)
-import Control.Monad (forM_, (=<<))
-import Data.ByteString (getContents)
+import Control.Monad (forM_, (=<<), void)
+import Data.ByteString (getContents, readFile)
 import Data.Function ((.), ($))
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Monoid ((<>))
-import Data.Text (Text, pack, unpack)
+import Data.Text (Text, pack, unpack, take, drop)
 import Data.Text.IO (putStrLn)
-import Database.MySQL.Simple (ConnectInfo(..), connect, defaultConnectInfo, query_, Only(Only))
+import Database.MySQL.Simple (ConnectInfo(..), connect, defaultConnectInfo, query_, Only(Only, fromOnly))
 import System.Environment (getArgs)
 import System.IO (IO)
 import Xtal.MTZ (MtzFile, mtzDataset, mtzHeader, mtzHistory, mtzLocateHeader, mtzLocateHeaders, mtzReflections, mtzTitle, parseMtz)
@@ -29,22 +32,39 @@ mtzdmp mtz = do
   putStrLn ""
   putStrLn (" * Number of Datasets = " <> showText (length (mtzLocateHeaders mtzDataset mtz)))
 
-main :: IO ()
-main = do
+clustermain :: IO ()
+clustermain = do
   args <- getArgs
   conn <-
     connect
       defaultConnectInfo
-        { connectHost = args !! 0,
+        { connectHost = head args,
           connectUser = args !! 1,
           connectPassword = args !! 2,
           connectDatabase = args !! 3
         }
-  xs <- query_ conn "SELECT crystal_id FROM Crystals"
-  forM_ xs $ \(Only crystalId) -> putStrLn crystalId
+  xs <- query_ conn "SELECT mtz_path FROM Data_Reduction"
+  let renderTime = renderDuration
+      progressStyle = defStyle { stylePostfix = elapsedTime renderTime <> msg " " <> remainingTime renderTime "N/A" <> msg " " <> percentage }
+  progress <- newProgressBar progressStyle 10 (Progress 0 (length xs) ())
+  let nonNullPaths :: [Text]
+      nonNullPaths = mapMaybe fromOnly xs
+      rewrite :: Text -> Text
+      rewrite = ("sshfs/" <>) . drop 23
+      action fileName = do
+        fileContents <- readFile (unpack fileName)
+        case parseMtz fileContents of
+          Left e -> putStrLn ("ERROR:   " <> fileName <> ": " <> pack e)
+          Right v -> pure ()
+        incProgress progress 1
+          --Right v -> putStrLn ("SUCCESS: " <> fileName)
+  parallel_ (action . rewrite <$> nonNullPaths)
+  stopGlobalPool
+  --forM_ (rewrite <$> nonNullPaths) $ \f -> do
+  --forM_ xs $ \(Only mtzPath) -> putStrLn (fromMaybe "NULL" mtzPath)
 
-mtzmain :: IO ()
-mtzmain = do
+main :: IO ()
+main = do
   stdin <- getContents
   case parseMtz stdin of
     Left e -> putStrLn (pack e)

@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 03b95144083140c15ca637c1ae89c745c94fa1b91dd4872331ca84a2707b6a26
+-- hash: f741d01e37ef40c7a427be3f40dec03bd82639fc1b72b089ae91c0b23145fd21
 
 name:           hsxtal
 version:        0.1.0.0
@@ -38,9 +38,6 @@ library
     , base >=4.7 && <5
     , binary
     , bytestring
-    , mysql-simple
-    , parallel-io
-    , terminal-progress-bar
     , text
     , vector
   default-language: Haskell2010
@@ -59,9 +56,6 @@ executable hsxtal-exe
     , binary
     , bytestring
     , hsxtal
-    , mysql-simple
-    , parallel-io
-    , terminal-progress-bar
     , text
     , vector
   default-language: Haskell2010
@@ -81,9 +75,6 @@ test-suite hsxtal-test
     , binary
     , bytestring
     , hsxtal
-    , mysql-simple
-    , parallel-io
-    , terminal-progress-bar
     , text
     , vector
   default-language: Haskell2010

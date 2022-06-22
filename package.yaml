@@ -28,9 +28,9 @@ dependencies:
 - vector
 - binary
 # For DB connection
-- mysql-simple
-- parallel-io
-- terminal-progress-bar
+# - mysql-simple
+# - parallel-io
+# - terminal-progress-bar
 
 library:
   source-dirs: src

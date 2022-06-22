@@ -18,7 +18,7 @@ import Data.Text.IO (putStrLn)
 import Database.MySQL.Simple (ConnectInfo(..), connect, defaultConnectInfo, query_, Only(Only, fromOnly))
 import System.Environment (getArgs)
 import System.IO (IO)
-import Xtal.MTZ (MtzFile, mtzDataset, mtzHeader, mtzHistory, mtzLocateHeader, mtzLocateHeaders, mtzReflections, mtzTitle, parseMtz)
+import Xtal.MTZ
 import Prelude (Either (Left, Right), Foldable (length), Show (show), print, undefined)
 
 showText :: Show a => a -> Text
@@ -30,7 +30,13 @@ mtzdmp mtz = do
   putStrLn ""
   putStrLn (" " <> fromMaybe "no title" (mtzLocateHeader mtzTitle mtz))
   putStrLn ""
-  putStrLn (" * Number of Datasets = " <> showText (length (mtzLocateHeaders mtzDataset mtz)))
+  let datasets = mtzLocateHeaders mtzDataset mtz
+  putStrLn (" * Number of Datasets = " <> showText (length datasets))
+  forM_ datasets $ \ds -> putStrLn $ mtzDatasetName ds <> " (ID " <> showText (mtzDatasetDatasetId ds) <> ")"
+  putStrLn ""
+  putStrLn " * HISTORY for current MTZ file :"
+  putStrLn ""
+  forM_ (mtzHistory mtz) $ \h -> putStrLn (" " <> bsToText h)
 
 clustermain :: IO ()
 clustermain = do

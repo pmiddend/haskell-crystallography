@@ -9,8 +9,9 @@ module Xtal.MTZ
     mtzLocateHeaders,
     mtzTitle,
     mtzDataset,
-    MtzDatasetInfo,
-    MtzFile
+    bsToText,
+    MtzDatasetInfo(..),
+    MtzFile,
   )
 where
 
@@ -30,15 +31,49 @@ import Data.Function (id, (.))
 import Data.Functor (($>), (<$>), (<&>))
 import Data.Int (Int)
 import Data.Maybe (fromMaybe, listToMaybe, mapMaybe)
-import Data.Monoid ((<>))
+import Data.Monoid (mempty, (<>))
 import Data.String (String)
 import qualified Data.Text as Text
 import qualified Data.Vector as BoxedVector
 import qualified Data.Vector.Unboxed as UnboxedVector
 import Data.Word (Word8)
-import Debug.Trace (trace, traceShowId)
+import Debug.Trace (trace, traceShow, traceShowId)
 import Text.Show (Show (show))
 import Prelude (Bool (True), Char, Double, Either (Left, Right), Float, Functor (fmap), Maybe (Just, Nothing), MonadFail (fail), const, either, fromIntegral, read, undefined, (*), (+), (-))
+
+data MtzMetaColumn = MtzMetaColumn {
+   mtzMetaColumnName :: Text.Text,
+   mtzMetaColumnType :: Char,
+   mtzMetaColumnMinValue :: Double,
+   mtzMetaColumnMaxValue :: Double
+   } deriving(Show)
+
+data MtzMetaDataset = MtzMetaDatatset {
+    mtzMetaDatasetId :: Int
+  , mtzMetaDatasetName :: Text.Text
+  , mtzMetaDatasetColumns :: [MtzMetaColumn]
+  } deriving(Show)
+
+data MtzMetaProject = MtzMetaProject {
+    mtzMetaProjectName :: Text.Text
+  , mtzMetaProjectCrystals :: [MtzMetaCrystal]
+  } deriving(Show)
+
+data MtzMetaCrystal = MtzMetaCrystal {
+    mtzMetaCrystalName :: Text.Text
+  , mtzMetaCrystalDatasets :: [MtzMetaDataset]
+  } deriving(Show)
+
+mtzMetaFromHeaders :: MtzFile -> [MtzMetaProject]
+mtzMetaFromHeaders mtzFile =
+  let crystals :: [MtzProjectInfo]
+      crystals = mtzLocateHeaders mtzProject mtzFile
+      makeProject :: MtzProjectInfo -> MtzMetaProject
+      makeProject pi = MtzMetaProject {
+          mtzMetaProjectName = mtzProjectName pi
+        , mtzMetaProjectCrystals = makeCrystal <$> (mtzLocateHeaders mtzCrystal mtzFile)
+        }
+  in undefined
 
 data MtzNcolInfo = MtzNcolInfo
   { mtzNcolColumnCount :: Int,
@@ -100,6 +135,15 @@ data MtzProjectInfo = MtzProjectInfo
   }
   deriving (Show)
 
+data MtzColgrpInfo = MtzColgrpInfo
+  { mtzColgrpLabel :: Text.Text,
+    mtzColgrpName :: Text.Text,
+    mtzColgrpType :: Text.Text,
+    mtzColgrpPosition :: Int,
+    mtzColgrpDatasetId :: Int
+  }
+  deriving (Show)
+
 data MtzCrystalInfo = MtzCrystalInfo
   { mtzCrystalDatasetId :: Int,
     mtzCrystalName :: Text.Text
@@ -129,6 +173,7 @@ data MtzHeaderEntry
   | MtzTitle ByteString
   | MtzNcol MtzNcolInfo
   | MtzSort MtzSortInfo
+  | MtzColgrp MtzColgrpInfo
   | MtzCell MtzCellParameters
   | MtzSymInf MtzSymInfInfo
   | MtzSymm MtzSymmetryOperation
@@ -198,6 +243,15 @@ colsrcParser = do
   metadata <- AT.skipSpace *> AT.takeText
   pure (MtzColsrcInfo (if label == "M/ISYM" then "M_ISYM" else label) metadata)
 
+colgrpParser :: AT.Parser MtzColgrpInfo
+colgrpParser =
+  MtzColgrpInfo
+    <$> (textSkipWs *> AT.takeWhile (/= ' '))
+    <*> (textSkipWs *> AT.takeWhile (/= ' '))
+    <*> (textSkipWs *> AT.takeWhile (/= ' '))
+    <*> (textSkipWs *> AT.decimal)
+    <*> (textSkipWs *> AT.decimal)
+
 projectParser :: AT.Parser MtzProjectInfo
 projectParser =
   MtzProjectInfo
@@ -258,7 +312,7 @@ valmParser = (AT.string "NAN" $> Nothing) <|> (Just <$> AT.double)
 
 mtzHeaderEntryParser =
   let rawHeader :: ByteString -> Parser ByteString
-      rawHeader title = string (traceShowId title <> " ") *> take (80 - length title - 1)
+      rawHeader title = string (title <> " ") *> take (80 - length title - 1)
       strippedHeader title = dropWhileEnd (== 32) <$> rawHeader title
       subParsedHeader title parser ctor = ((rawHeader title >>= applyTextParser parser) <&> ctor)
    in (MtzVersion <$> strippedHeader "VERS")
@@ -272,6 +326,7 @@ mtzHeaderEntryParser =
         <|> subParsedHeader "VALM" valmParser MtzValm
         <|> subParsedHeader "COLUMN" colParser MtzCol
         <|> subParsedHeader "COLSRC" colsrcParser MtzColsrc
+        <|> subParsedHeader "COLGRP" colgrpParser MtzColgrp
         <|> (MtzNdif . read . BS8.unpack <$> rawHeader "NDIF")
         <|> subParsedHeader "PROJECT" projectParser MtzProject
         <|> subParsedHeader "CRYSTAL" crystalParser MtzCrystal
@@ -304,6 +359,14 @@ mtzLocateHeaders f = mapMaybe f . mtzHeader
 mtzTitle :: MtzHeaderGetter Text.Text
 mtzTitle (MtzTitle n) = Just (bsToText n)
 mtzTitle _ = Nothing
+
+mtzCrystal :: MtzHeaderGetter MtzCrystalInfo
+mtzCrystal (MtzCrystal n) = Just n
+mtzCrystal _ = Nothing
+
+mtzProject :: MtzHeaderGetter MtzProjectInfo
+mtzProject (MtzProject n) = Just n
+mtzProject _ = Nothing
 
 mtzDataset :: MtzHeaderGetter MtzDatasetInfo
 mtzDataset (MtzDataset n) = Just n

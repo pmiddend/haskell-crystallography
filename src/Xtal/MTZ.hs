@@ -10,7 +10,7 @@ module Xtal.MTZ
     mtzTitle,
     mtzDataset,
     bsToText,
-    MtzDatasetInfo(..),
+    MtzDatasetInfo (..),
     MtzFile,
   )
 where
@@ -41,28 +41,32 @@ import Debug.Trace (trace, traceShow, traceShowId)
 import Text.Show (Show (show))
 import Prelude (Bool (True), Char, Double, Either (Left, Right), Float, Functor (fmap), Maybe (Just, Nothing), MonadFail (fail), const, either, fromIntegral, read, undefined, (*), (+), (-))
 
-data MtzMetaColumn = MtzMetaColumn {
-   mtzMetaColumnName :: Text.Text,
-   mtzMetaColumnType :: Char,
-   mtzMetaColumnMinValue :: Double,
-   mtzMetaColumnMaxValue :: Double
-   } deriving(Show)
+data MtzMetaColumn = MtzMetaColumn
+  { mtzMetaColumnName :: Text.Text,
+    mtzMetaColumnType :: Char,
+    mtzMetaColumnMinValue :: Double,
+    mtzMetaColumnMaxValue :: Double
+  }
+  deriving (Show)
 
-data MtzMetaDataset = MtzMetaDatatset {
-    mtzMetaDatasetId :: Int
-  , mtzMetaDatasetName :: Text.Text
-  , mtzMetaDatasetColumns :: [MtzMetaColumn]
-  } deriving(Show)
+data MtzMetaDataset = MtzMetaDatatset
+  { mtzMetaDatasetId :: Int,
+    mtzMetaDatasetName :: Text.Text,
+    mtzMetaDatasetColumns :: [MtzMetaColumn]
+  }
+  deriving (Show)
 
-data MtzMetaProject = MtzMetaProject {
-    mtzMetaProjectName :: Text.Text
-  , mtzMetaProjectCrystals :: [MtzMetaCrystal]
-  } deriving(Show)
+data MtzMetaProject = MtzMetaProject
+  { mtzMetaProjectName :: Text.Text,
+    mtzMetaProjectCrystals :: [MtzMetaCrystal]
+  }
+  deriving (Show)
 
-data MtzMetaCrystal = MtzMetaCrystal {
-    mtzMetaCrystalName :: Text.Text
-  , mtzMetaCrystalDatasets :: [MtzMetaDataset]
-  } deriving(Show)
+data MtzMetaCrystal = MtzMetaCrystal
+  { mtzMetaCrystalName :: Text.Text,
+    mtzMetaCrystalDatasets :: [MtzMetaDataset]
+  }
+  deriving (Show)
 
 data MtzNcolInfo = MtzNcolInfo
   { mtzNcolColumnCount :: Int,

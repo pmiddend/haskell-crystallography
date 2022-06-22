@@ -2,20 +2,17 @@
 
 module Main where
 
--- import System.ProgressBar(newProgressBar, incProgress, defStyle, Progress(..), Style(..), elapsedTime, remainingTime, renderDuration, percentage, msg)
--- import Control.Concurrent.ParallelIO.Global(parallel_, stopGlobalPool)
-import Data.Functor((<$>))
-import Data.List((!!), head)
-import qualified Data.ByteString.Char8 as BS8
 import Control.Applicative (pure)
-import Control.Monad (forM_, (=<<), void)
+import Control.Monad (forM_, void, (=<<))
 import Data.ByteString (getContents, readFile)
-import Data.Function ((.), ($))
+import qualified Data.ByteString.Char8 as BS8
+import Data.Function (($), (.))
+import Data.Functor ((<$>))
+import Data.List (head, (!!))
 import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Monoid ((<>))
-import Data.Text (Text, pack, unpack, take, drop)
+import Data.Text (Text, drop, pack, take, unpack)
 import Data.Text.IO (putStrLn)
--- import Database.MySQL.Simple (ConnectInfo(..), connect, defaultConnectInfo, query_, Only(Only, fromOnly))
 import System.Environment (getArgs)
 import System.IO (IO)
 import Xtal.MTZ

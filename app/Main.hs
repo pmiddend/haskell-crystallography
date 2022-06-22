@@ -2,8 +2,8 @@
 
 module Main where
 
-import System.ProgressBar(newProgressBar, incProgress, defStyle, Progress(..), Style(..), elapsedTime, remainingTime, renderDuration, percentage, msg)
-import Control.Concurrent.ParallelIO.Global(parallel_, stopGlobalPool)
+-- import System.ProgressBar(newProgressBar, incProgress, defStyle, Progress(..), Style(..), elapsedTime, remainingTime, renderDuration, percentage, msg)
+-- import Control.Concurrent.ParallelIO.Global(parallel_, stopGlobalPool)
 import Data.Functor((<$>))
 import Data.List((!!), head)
 import qualified Data.ByteString.Char8 as BS8
@@ -15,7 +15,7 @@ import Data.Maybe (fromMaybe, mapMaybe)
 import Data.Monoid ((<>))
 import Data.Text (Text, pack, unpack, take, drop)
 import Data.Text.IO (putStrLn)
-import Database.MySQL.Simple (ConnectInfo(..), connect, defaultConnectInfo, query_, Only(Only, fromOnly))
+-- import Database.MySQL.Simple (ConnectInfo(..), connect, defaultConnectInfo, query_, Only(Only, fromOnly))
 import System.Environment (getArgs)
 import System.IO (IO)
 import Xtal.MTZ
@@ -38,36 +38,36 @@ mtzdmp mtz = do
   putStrLn ""
   forM_ (mtzHistory mtz) $ \h -> putStrLn (" " <> bsToText h)
 
-clustermain :: IO ()
-clustermain = do
-  args <- getArgs
-  conn <-
-    connect
-      defaultConnectInfo
-        { connectHost = head args,
-          connectUser = args !! 1,
-          connectPassword = args !! 2,
-          connectDatabase = args !! 3
-        }
-  xs <- query_ conn "SELECT mtz_path FROM Data_Reduction"
-  let renderTime = renderDuration
-      progressStyle = defStyle { stylePostfix = elapsedTime renderTime <> msg " " <> remainingTime renderTime "N/A" <> msg " " <> percentage }
-  progress <- newProgressBar progressStyle 10 (Progress 0 (length xs) ())
-  let nonNullPaths :: [Text]
-      nonNullPaths = mapMaybe fromOnly xs
-      rewrite :: Text -> Text
-      rewrite = ("sshfs/" <>) . drop 23
-      action fileName = do
-        fileContents <- readFile (unpack fileName)
-        case parseMtz fileContents of
-          Left e -> putStrLn ("ERROR:   " <> fileName <> ": " <> pack e)
-          Right v -> pure ()
-        incProgress progress 1
-          --Right v -> putStrLn ("SUCCESS: " <> fileName)
-  parallel_ (action . rewrite <$> nonNullPaths)
-  stopGlobalPool
-  --forM_ (rewrite <$> nonNullPaths) $ \f -> do
-  --forM_ xs $ \(Only mtzPath) -> putStrLn (fromMaybe "NULL" mtzPath)
+-- clustermain :: IO ()
+-- clustermain = do
+--   args <- getArgs
+--   conn <-
+--     connect
+--       defaultConnectInfo
+--         { connectHost = head args,
+--           connectUser = args !! 1,
+--           connectPassword = args !! 2,
+--           connectDatabase = args !! 3
+--         }
+--   xs <- query_ conn "SELECT mtz_path FROM Data_Reduction"
+--   let renderTime = renderDuration
+--       progressStyle = defStyle { stylePostfix = elapsedTime renderTime <> msg " " <> remainingTime renderTime "N/A" <> msg " " <> percentage }
+--   progress <- newProgressBar progressStyle 10 (Progress 0 (length xs) ())
+--   let nonNullPaths :: [Text]
+--       nonNullPaths = mapMaybe fromOnly xs
+--       rewrite :: Text -> Text
+--       rewrite = ("sshfs/" <>) . drop 23
+--       action fileName = do
+--         fileContents <- readFile (unpack fileName)
+--         case parseMtz fileContents of
+--           Left e -> putStrLn ("ERROR:   " <> fileName <> ": " <> pack e)
+--           Right v -> pure ()
+--         incProgress progress 1
+--           --Right v -> putStrLn ("SUCCESS: " <> fileName)
+--   parallel_ (action . rewrite <$> nonNullPaths)
+--   stopGlobalPool
+--   --forM_ (rewrite <$> nonNullPaths) $ \f -> do
+--   --forM_ xs $ \(Only mtzPath) -> putStrLn (fromMaybe "NULL" mtzPath)
 
 main :: IO ()
 main = do

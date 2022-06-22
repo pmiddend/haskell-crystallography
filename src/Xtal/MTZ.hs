@@ -64,17 +64,6 @@ data MtzMetaCrystal = MtzMetaCrystal {
   , mtzMetaCrystalDatasets :: [MtzMetaDataset]
   } deriving(Show)
 
-mtzMetaFromHeaders :: MtzFile -> [MtzMetaProject]
-mtzMetaFromHeaders mtzFile =
-  let crystals :: [MtzProjectInfo]
-      crystals = mtzLocateHeaders mtzProject mtzFile
-      makeProject :: MtzProjectInfo -> MtzMetaProject
-      makeProject pi = MtzMetaProject {
-          mtzMetaProjectName = mtzProjectName pi
-        , mtzMetaProjectCrystals = makeCrystal <$> (mtzLocateHeaders mtzCrystal mtzFile)
-        }
-  in undefined
-
 data MtzNcolInfo = MtzNcolInfo
   { mtzNcolColumnCount :: Int,
     mtzNcolReflCount :: Int,
